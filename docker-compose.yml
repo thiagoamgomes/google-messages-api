@@ -1,15 +1,30 @@
 version: "3.2"
 
 services:
-  rabbitmq:
+  rabbitmq-api:
     image: rabbitmq:3-management-alpine
-    container_name: rabbitmq
+    container_name: rabbitmq-api
     restart: always
     ports:
-      - 5672:5672
-      - 15672:15672
+      - 5672
+      - 15672
     networks:
       - google_network
+
+  sms-google:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sms-google
+    restart: always
+    ports:
+      - 4000:4000
+    depends_on:
+      - rabbitmq-api
+    networks:
+      - google_network
+    environment:
+      - RABBITMQ=amqp://rabbitmq-api  
 
 networks:
   google_network:
