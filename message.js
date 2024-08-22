@@ -1,6 +1,10 @@
 const { setTimeout } = require('timers');
 
-const { enviarWebhook } = require('./webhook')
+const { axiosConfig, enviarWebhook } = require('./webhook')
+
+const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
 
 async function checkUnreadConversations(instanceName) {
     try{
@@ -88,7 +92,7 @@ function extractConversationId(url) {
     return match ? match[1] : null;
 }
 
-async function sendMessage(instanceName, phoneNumber, message, filaId) {
+async function sendMessage({ instanceName, phoneNumber, message, attachmentPath = null, messageType = 'text' }, filaId) {
     try {
         if (browserInstances[instanceName]) {
             const {
@@ -120,20 +124,37 @@ async function sendMessage(instanceName, phoneNumber, message, filaId) {
 
             await page.waitForSelector('textarea[data-e2e-message-input-box]', {
                 visible: true
-            });
+            });    
+            
+            await page.screenshot({path: `./screenshots/${generateRandomString(8)}.png`});
+            
+            if (messageType === 'text') {
+                await page.type('textarea[data-e2e-message-input-box]', message);
 
-            // const [ fileChooser ] = await Promise.all([
-            //     page.waitForFileChooser(),
-            //     page.click('.inline-compose-buttons button[data-e2e-picker-button="ATTACHMENT"]')
-            // ])
+            } else if (messageType === 'attachment') {    
+                
+                await page.screenshot({path: `./screenshots/${generateRandomString(8)}.png`});
 
-            // await fileChooser.accept(['C:\Users\thiag\Documents\novos_projetos\google-messages\imagem.png'])
+                const [fileChooser] = await Promise.all([
+                    page.waitForFileChooser(),
+                    page.click('.inline-compose-buttons button[data-e2e-picker-button="ATTACHMENT"]')
+                ])
 
-            await page.type('textarea[data-e2e-message-input-box]', message);
+                await page.screenshot({path: `./screenshots/${generateRandomString(8)}.png`});                            
+
+                await fileChooser.accept([attachmentPath])
+
+                // await delay(1000)  
+
+                await page.screenshot({path: `./screenshots/${generateRandomString(8)}.png`});
+              
+            }
 
             await page.waitForSelector('.floating-button button[data-e2e-send-text-button]', {
                 visible: true
             });
+
+            await page.screenshot({path: `./screenshots/${generateRandomString(8)}.png`});
 
             await page.click('.floating-button button[data-e2e-send-text-button]');
 
@@ -142,9 +163,10 @@ async function sendMessage(instanceName, phoneNumber, message, filaId) {
 
             enviarWebhook(webhook, 'messageSent', instanceName, {
                 success: true,
+                messageType,
                 filaId,
                 chatId: conversationId,
-                phoneNumber
+                phoneNumber,                
             })
  
             return {
@@ -193,22 +215,45 @@ async function consumeMessages(queueName) {
             `${queueName}_queue`,
             async function (data) {
                 if (data.content) { 
-                    const json = JSON.parse(data.content.toString());                                    
+                    const { instanceName, phoneNumber, messageType, message, mediaURL, filaId } = JSON.parse(data.content.toString());                                    
 
                     try {                        
-                        browserInstances[json.instanceName].enableAnswer = false   
-                        await sendMessage(json.instanceName, json.phoneNumber, json.message, json.filaId)                        
+                        browserInstances[instanceName].enableAnswer = false   
+
+                        if(messageType === 'attachment'){
+                            const attachment = await saveImageFromUrl({ phoneNumber, mediaURL, instanceName })
+
+                            if(attachment.error === true){
+                                enviarWebhook(browserInstances[instanceName].webhook, 'messageSent', instanceName, {
+                                    success: false,
+                                    messageType,
+                                    filaId,
+                                    phoneNumber,                
+                                })
+
+                                channel.ack(data);
+
+                                return
+                            }
+
+                            await sendMessage({ instanceName, phoneNumber, message, attachmentPath: attachment.path, messageType}, filaId)   
+
+                            // await fs.unlink(attachment.path)
+                        } else {
+                            await sendMessage({ instanceName, phoneNumber, message }, filaId)   
+                        }
+                                                                     
                         channel.ack(data);
                     } catch (err) {
                         
                         channel.nack(data);
                     }
 
-                    checarFila(channel, json.instanceName)
+                    checarFila(channel, instanceName)
                     .then(data => {
                         if(data){
-                            browserInstances[json.instanceName].enableAnswer = true
-                            checkUnreadConversations(json.instanceName)
+                            browserInstances[instanceName].enableAnswer = true
+                            checkUnreadConversations(instanceName)
                         }
                     })                    
                     
@@ -247,6 +292,65 @@ async function checarFila(channel, instanceName) {
     } catch {
         return true
     }
+} 
+
+function generateRandomString(length) {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    const charactersLength = characters.length;
+    for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+}
+
+async function saveImageFromUrl({ phoneNumber, mediaURL, instanceName }, directory = './uploads') {
+    try {
+        // Obtenha a extensão do arquivo a partir da URL
+        const extension = path.extname(mediaURL);
+
+        // Crie um nome de arquivo personalizado
+        const randomString = generateRandomString(6);
+        const fileName = `${instanceName}${phoneNumber}${randomString}${extension}`;
+
+        // Crie o diretório se ele não existir
+        if (!fs.existsSync(directory)) {
+            fs.mkdirSync(directory, { recursive: true });
+        }
+
+        // Caminho completo para salvar a imagem
+        const filePath = path.join(directory, fileName);
+
+        // Faça o download da imagem
+        const response = await axios({
+            url: mediaURL,
+            method: 'GET',
+            responseType: 'stream',
+            proxy: false
+        });
+
+        // Salve a imagem na pasta especificada
+        const writer = fs.createWriteStream(filePath);
+        response.data.pipe(writer);
+
+        return new Promise((resolve, reject) => {
+            writer.on('finish', () => resolve({
+                error: false,
+                path: filePath
+            }));
+            writer.on('error', reject);
+        });
+    } catch (error) {
+        console.error('Erro ao baixar a imagem:', error.message);
+        return {
+            error: true,
+            message: "Failed to retrieve the file"
+        }
+    }
+}
+
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 module.exports = {

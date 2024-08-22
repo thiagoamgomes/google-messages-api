@@ -1,6 +1,7 @@
 const express = require('express');
 const amqp = require('amqplib/callback_api')
 const QRCode = require('qrcode');
+const qrcodeTerminal = require('qrcode-terminal')
 const app = express();
 const port = 4000;
 
@@ -64,6 +65,11 @@ app.get('/create-instance/:instanceName', async (req, res) => {
         const qrCodeUrl = await browserInstances[instanceName].page.$eval('[data-qr-code]', qrCodeElement => qrCodeElement.getAttribute('data-qr-code'));
 
         // console.log(`Instância '${instanceName}' criada. URL do QR Code:`, qrCodeUrl);
+
+        console.log(qrcodeTerminal.generate(qrCodeUrl, {
+            small: true
+        }))
+        
         const QRbase64 = await new Promise((resolve, reject) => {
             QRCode.toDataURL(qrCodeUrl, function (err, code) {
                 if (err) {
@@ -112,7 +118,7 @@ app.post('/send-message/:instanceName', async (req, res) => {
     return
   }
 
-  const { phoneNumber, message } = req.body
+  const { phoneNumber, message, messageType = 'text', mediaURL = null } = req.body
 
   try {   
     const filaId = await getRandomInt(1, 99999999999); 
@@ -125,7 +131,9 @@ app.post('/send-message/:instanceName', async (req, res) => {
     await channel.sendToQueue(`${queueName}_queue`, Buffer.from(JSON.stringify({
         instanceName,
         phoneNumber,
+        messageType,
         message,
+        mediaURL,
         filaId
     })));
   

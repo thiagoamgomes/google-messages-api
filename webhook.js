@@ -41,5 +41,6 @@ async function enviarWebhook(url, event, instanceName, data = null){
 }
 
 module.exports = {
+    axiosConfig,
     enviarWebhook
 }

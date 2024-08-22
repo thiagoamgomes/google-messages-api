@@ -32,6 +32,7 @@ async function createBrowserInstance(instanceName, webhook) {
             webhook,
             phoneConnected: false
         };
+
     } catch(err) {
         console.log('Erro ao criar instância', err)
     }
@@ -67,7 +68,7 @@ async function desconectarInstancia(instanceName, sendWebhook = true){
         }
     }
 }
-
+ 
 async function saveSessionData(page, instanceName, webhook) {
     try {
         const sessionData = await page.session.dump();
@@ -144,9 +145,7 @@ async function verificarDesconexao() {
 
 async function waitForAuthentication(page, webhook, instanceName) {
     let Waiting = true    
-    let countReconnection = 0
-
-    await page.screenshot({path: './buddy-screenshot.png'});
+    let countReconnection = 0    
     
     while (Waiting) {
         if(!browserInstances[instanceName]){
