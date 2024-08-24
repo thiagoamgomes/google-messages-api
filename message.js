@@ -126,27 +126,27 @@ async function sendMessage({ instanceName, phoneNumber, message, attachmentPath 
                 visible: true
             });    
             
-            await page.screenshot({path: `./screenshots/${generateRandomString(8)}.png`});
+            // await page.screenshot({path: `./screenshots/${generateRandomString(8)}.png`});
             
             if (messageType === 'text') {
                 await page.type('textarea[data-e2e-message-input-box]', message);
 
             } else if (messageType === 'attachment') {    
                 
-                await page.screenshot({path: `./screenshots/${generateRandomString(8)}.png`});
+                // await page.screenshot({path: `./screenshots/${generateRandomString(8)}.png`});
 
                 const [fileChooser] = await Promise.all([
                     page.waitForFileChooser(),
                     page.click('.inline-compose-buttons button[data-e2e-picker-button="ATTACHMENT"]')
                 ])
 
-                await page.screenshot({path: `./screenshots/${generateRandomString(8)}.png`});                            
+                // await page.screenshot({path: `./screenshots/${generateRandomString(8)}.png`});                            
 
                 await fileChooser.accept([attachmentPath])
 
                 // await delay(1000)  
 
-                await page.screenshot({path: `./screenshots/${generateRandomString(8)}.png`});
+                // await page.screenshot({path: `./screenshots/${generateRandomString(8)}.png`});
               
             }
 
@@ -154,7 +154,7 @@ async function sendMessage({ instanceName, phoneNumber, message, attachmentPath 
                 visible: true
             });
 
-            await page.screenshot({path: `./screenshots/${generateRandomString(8)}.png`});
+            // await page.screenshot({path: `./screenshots/${generateRandomString(8)}.png`});
 
             await page.click('.floating-button button[data-e2e-send-text-button]');
 
