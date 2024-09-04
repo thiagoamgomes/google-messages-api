@@ -1,0 +1,124 @@
+{
+	"info": {
+		"_postman_id": "8ecc92b9-333f-4896-8234-6ea35f8e615a",
+		"name": "SMS Google",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "19562793"
+	},
+	"item": [
+		{
+			"name": "Send Message",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"phoneNumber\": {{phoneNumber}},\r\n    \"messageType\": \"attachment\", //Utilize text ou attachment para enviar imagem, video, documento e etc.\r\n    \"message\": \"Acho que deu certo\",\r\n    \"mediaURL\": \"https://2.img-dpreview.com/files/p/E~C1000x0S4000x4000T1200x1200~articles/3925134721/0266554465.jpeg\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseURL}}/send-message/{{instanceName}}",
+					"host": [
+						"{{baseURL}}"
+					],
+					"path": [
+						"send-message",
+						"{{instanceName}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Instance",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"webhook\": \"https://webhook.site/d0d52146-749f-4e90-a646-de6f42aea2f5\" \r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseURL}}/create-instance/{{instanceName}}",
+					"host": [
+						"{{baseURL}}"
+					],
+					"path": [
+						"create-instance",
+						"{{instanceName}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Instance",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{baseURL}}/delete-instance/{{instanceName}}",
+					"host": [
+						"{{baseURL}}"
+					],
+					"path": [
+						"delete-instance",
+						"{{instanceName}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseURL",
+			"value": "http://localhost:4000",
+			"type": "string"
+		},
+		{
+			"key": "instanceName",
+			"value": "instance1",
+			"type": "string"
+		},
+		{
+			"key": "phoneNumber",
+			"value": "551166996699",
+			"type": "string"
+		}
+	]
+}
