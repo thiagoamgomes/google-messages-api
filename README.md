@@ -9,6 +9,7 @@ Esta API fornece uma interface para enviar mensagens RCS pelo celular usando o a
 - [Configuração](#configuração)
 - [Uso](#uso)
 - [Endpoints](#endpoints)
+- [Webhook](#webhook)
 - [Contribuindo](#contribuindo)
 - [Licença](#licença)
 
@@ -57,6 +58,14 @@ A coleção do Postman inclui os seguintes endpoints principais:
 - **send-message:** Enviar uma mensagem dos tipos text e attachment. No tipo attachment pode ser enviado arquivos como imagem, video, documento, etc.
 
 Confira o arquivo `sms-google-collection.json` para mais detalhes sobre os parâmetros de cada endpoint.
+
+## Webhook
+
+Ao criar uma nova instância está disponível a possibilidade de receber webhook, por enquanto as informações são básicas:
+
+- phoneConnected
+- phoneDisconnected
+- newMessage
 
 ## Contribuindo
 
